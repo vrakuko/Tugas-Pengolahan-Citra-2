@@ -10,7 +10,7 @@ close all;
 % --- PENGATURAN AWAL ---
 % Silakan letakkan nama file citra Anda di sini.
 % Pastikan file citra berada di folder yang sama dengan skrip ini.
-nama_citra_gray = 'D:\vrain\pengcit\Tugas-Pengolahan-Citra-2\imageUji\gray1.png'; % Contoh dari file user
+nama_citra_gray = '../'; % Contoh dari file user
 nama_citra_warna = 'D:\vrain\pengcit\Tugas-Pengolahan-Citra-2\imageUji\color1.png'; % Contoh dari file user
 
 % Membaca citra dan mengonversinya jika perlu
