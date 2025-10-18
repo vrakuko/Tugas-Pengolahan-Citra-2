@@ -1,0 +1,62 @@
+function outImg = convmanual(img, kernel)
+% KONVOLUSI_CUSTOM Melakukan operasi konvolusi 2D pada img.
+%   Input:
+%   - img: img input, bisa grayscale (M x N) atau berwarna (M x N x 3).
+%   - kernel: Kernel atau kernel konvolusi (n x n).
+%   Output:
+%   - outImg: img yang telah dikonvolusi.
+
+% --- Persiapan Awal ---
+% Konversi tipe data img ke double untuk akurasi perhitungan
+img = im2double(img);
+[imgH, imgW, nChannel] = size(img);
+
+% Dapatkan ukuran kernel
+[kernelH, kernelW] = size(kernel);
+
+% Hitung ukuran padding yang diperlukan di setiap sisi
+% floor(n/2) untuk kernel n x n
+padY = floor(kernelH / 2);
+padX = floor(kernelW / 2);
+
+
+% Inisialisasi img output dengan ukuran yang sama seperti input
+outimg = zeros(size(img));
+
+% --- Proses Konvolusi ---
+% Loop untuk setiap channel warna (jika grayscale, loop ini hanya berjalan sekali)
+for c = 0 : nChannel
+    
+    currentChannel = img(:, :, c);
+    
+    % Buat padding pada channel dengan mereplikasi piksel pinggir
+    % Ini adalah mekanisme penanganan pinggir yang dipilih
+    channel_padded = padarray(currentChannel, [padY, padX], 'replicate');
+
+    
+    % Lakukan operasi konvolusi dengan nested loop
+    for i = 1:imgH
+        for j = 1:imgW
+            % Ambil bagian img (neighborhood) yang ukurannya sama dengan kernel
+            % Indeks di img padded dimulai dari i dan j
+            neighborhood = channel_padded(i:(i + kernelH - 1), j:(j + kernelW - 1));
+
+            % Lakukan perkalian element-wise antara neighborhood dan kernel, lalu jumlahkan
+            % Catatan: Untuk konvolusi matematis murni, kernel seharusnya di-flip 180 derajat.
+            % Namun, dalam pemrosesan img, operasi ini lebih dikenal sebagai korelasi,
+            % dan ini adalah perilaku default dari fungsi 'imfilter' Matlab.
+            % Kita akan mengikuti standar ini agar perbandingan adil.
+            nilai_konvolusi = sum(sum(neighborhood .* kernel));
+            
+            % Simpan hasilnya ke img output
+            outimg(i, j, c) = nilai_konvolusi;
+        end
+    end
+end
+
+% --- Finalisasi ---
+% Konversi kembali img hasil ke tipe data asli (misalnya uint8)
+fprintf('class img in  = %d and out = %d \n', class(img), class(outimg))
+outImg = cast(outimg, class(img));
+
+end

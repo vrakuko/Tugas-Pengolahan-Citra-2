@@ -1,0 +1,106 @@
+% =========================================================================
+% SKRIP UNTUK MENGUJI DAN MEMBANDINGKAN FUNGSI KONVOLUSI CUSTOM
+% =========================================================================
+
+% Membersihkan workspace dan menutup semua gambar
+clear;
+clc;
+close all;
+
+% --- PENGATURAN AWAL ---
+% Silakan letakkan nama file citra Anda di sini.
+% Pastikan file citra berada di folder yang sama dengan skrip ini.
+nama_citra_gray = 'D:\vrain\pengcit\Tugas-Pengolahan-Citra-2\imageUji\gray1.png'; % Contoh dari file user
+nama_citra_warna = 'D:\vrain\pengcit\Tugas-Pengolahan-Citra-2\imageUji\color1.png'; % Contoh dari file user
+
+% Membaca citra dan mengonversinya jika perlu
+try
+    citra_gray = imread(nama_citra_gray);
+    
+    citra_warna = imread(nama_citra_warna);
+    
+
+catch ME
+    disp('Error: Gagal memuat citra. Pastikan nama file dan path sudah benar.');
+    disp(ME.message);
+    return;
+end
+
+
+% --- DEFINISI MASK ---
+% Mask-mask dari gambar yang diberikan
+mask_gaussian_3x3 = (1/16) * [1 2 1; 2 4 2; 1 2 1];
+mask_laplacian_4 = [0 -1 0; -1 4 -1; 0 -1 0];
+mask_gaussian_7x7 = (1/140) * [1 1 2 2 2 1 1; 1 2 2 4 2 2 1; 2 2 4 8 4 2 2; 2 4 8 16 8 4 2; 2 2 4 8 4 2 2; 1 2 2 4 2 2 1; 1 1 2 2 2 1 1];
+mask_sharpen = [-1 -1 -1; -1 17 -1; -1 -1 -1];
+
+% 1. Membuat Kernel Mean Filter
+kernel_mean = ones(7, 7) / (7 * 7);
+
+% 2. Membuat Kernel Gaussian Filter (menggunakan fungsi bawaan untuk membuat kernelnya)
+kernel_gaussian = fspecial('gaussian', [7 7], 3);
+% =========================================================================
+% UJI 1: CITRA GRAYSCALE DENGAN MASK LAPLACIAN (DETEKSI TEPI)
+% =========================================================================
+fprintf('--- UJI 1: Citra Grayscale (%s) dengan Mask Laplacian 3x3 ---\n', nama_citra_gray);
+uji_dan_tampilkan(citra_gray,kernel_mean, 'Uji 1: Grayscale - Laplacian');
+
+% =========================================================================
+% UJI 2: CITRA BERWARNA DENGAN MASK GAUSSIAN BLUR 3x3
+% =========================================================================
+fprintf('\n--- UJI 2: Citra Berwarna (%s) dengan Mask Gaussian Blur 3x3 ---\n', nama_citra_warna);
+uji_dan_tampilkan(citra_warna, kernel_mean, 'Uji 2: Berwarna - Gaussian Blur 3x3');
+
+% =========================================================================
+% UJI 3: CITRA GRAYSCALE TAMBAHAN DENGAN MASK SHARPEN
+% =========================================================================
+fprintf('\n--- UJI 3: Citra Grayscale (%s) dengan Mask Sharpen ---\n', nama_citra_gray);
+uji_dan_tampilkan(citra_gray, kernel_gaussian, 'Uji 3: Grayscale - Sharpen');
+
+% =========================================================================
+% UJI 4: CITRA BERWARNA TAMBAHAN DENGAN MASK GAUSSIAN BLUR 7x7
+% =========================================================================
+fprintf('\n--- UJI 4: Citra Berwarna  (%s) dengan Mask Gaussian Blur 7x7 ---\n', nama_citra_warna);
+uji_dan_tampilkan(citra_warna, kernel_gaussian, 'Uji 4: Berwarna - Gaussian Blur 7x7');
+
+
+% Fungsi helper untuk menjalankan tes dan menampilkan hasil
+function uji_dan_tampilkan(citra_uji, mask_uji, nama_figure)
+    fprintf('size citra: %d %d %d \n', size(citra_uji));
+    % Menjalankan fungsi buatan dan mengukur waktu
+    tic;
+    hasil_custom = convmanual(citra_uji, mask_uji);
+    waktu_custom = toc;
+    fprintf('Waktu eksekusi fungsi buatan: %.4f detik\n', waktu_custom);
+    
+    % Menjalankan fungsi built-in Matlab dan mengukur waktu
+    tic;
+    % 'replicate' digunakan agar cara penanganan pinggir sama dengan fungsi custom
+    hasil_matlab = imfilter(citra_uji, mask_uji, 'replicate');
+    waktu_matlab = toc;
+    fprintf('Waktu eksekusi fungsi Matlab (imfilter): %.4f detik\n', waktu_matlab);
+    % 
+    % % Menghitung perbedaan absolut antara kedua hasil
+    % perbedaan = imabsdiff(hasil_custom, hasil_matlab);
+    
+    % Menampilkan hasil perbandingan
+    figure('Name', nama_figure, 'NumberTitle', 'off');
+    
+    subplot(2, 2, 1);
+    imshow(citra_uji);
+    title('Citra Asli');
+    
+    subplot(2, 2, 2);
+    imshow(hasil_custom);
+    title(sprintf('Hasil Fungsi Buatan (%.4fs)', waktu_custom));
+    
+    subplot(2, 2, 3);
+    imshow(hasil_matlab);
+    title(sprintf('Hasil Matlab imfilter (%.4fs)', waktu_matlab));
+    
+    % subplot(2, 2, 4);
+    % imshow(perbedaan, []);
+    % title(['Perbedaan Absolut (Max: ' num2str(max(perbedaan(:))) ')']);
+    % colormap(gca, hot); % Peta warna untuk menonjolkan perbedaan
+    % colorbar;
+end
